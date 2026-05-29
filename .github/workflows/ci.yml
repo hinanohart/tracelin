@@ -26,6 +26,23 @@ jobs:
       - run: ruff format --check .
       - run: mypy tracelin
 
+  guards:
+    # honest-marketing regression guard: fail if an over-claim or a fabricated
+    # metric marker ever lands in the docs or the package.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: no over-claim phrases
+        run: |
+          if grep -rEniI "fully verif|guarantees? correctness|polynomial causal consistency|world.?s first" README.md NOTICE pyproject.toml tracelin/; then
+            echo "::error::banned over-claim phrase found"; exit 1
+          fi
+      - name: no placeholder / fake metrics in package
+        run: |
+          if grep -rEniI "placeholder|dummy metric|lorem ipsum" tracelin/ README.md; then
+            echo "::error::placeholder/fake-metric marker found"; exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     strategy:

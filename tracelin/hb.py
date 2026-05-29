@@ -6,13 +6,17 @@ and per-agent program order, then compute Fidge–Mattern vector clocks so that
 
 Trust tier (the soundness lever)
 --------------------------------
-``HappensBefore.tier`` reports how the order was obtained:
+``HappensBefore.tier`` reports how trustworthy the reconstructed order is:
 
-* ``"explicit"`` — every cross-event edge comes from ``parent_span_id`` /
-  ``links`` (plus per-agent program order).  Trustworthy.
-* ``"timestamp"`` — we had to fall back to wall-clock ``ts`` to order anything.
-  *Not* trustworthy: a convenient order we invent here could reorder two ops
-  that truly had a real-time dependency, producing a **false PASS**.
+* ``"causal"`` — single-agent, or at least one real cross-agent edge came from
+  ``parent_span_id`` / ``links`` (plus per-agent program order).  Trustworthy:
+  absence of an edge is taken to mean genuine concurrency.
+* ``"program_order"`` — multi-agent but no cross-agent causal edge at all.
+  *Not* trustworthy for PASS: absence of edges may merely mean the trace omitted
+  them, so a "no violation" result is reported ``INSUFFICIENT_HB`` rather than a
+  possibly-false ``PASS``.  Wall-clock ``ts`` is never turned into ordering edges
+  (a fabricated order could create a false FAIL); the ``timestamp`` tier of the
+  classical degradation ladder is deliberately deferred.
 
 The engine uses the tier to decide whether a "no violation found" result may be
 reported as ``PASS`` or must be reported as ``INSUFFICIENT_HB`` (see
@@ -37,7 +41,7 @@ class HappensBefore:
         self._agent_idx = {a: i for i, a in enumerate(self._agents)}
         # direct predecessor edges: span_id -> set(span_id)
         self.preds: dict[str, set[str]] = defaultdict(set)
-        self.tier: str = "explicit"
+        self.tier: str = "causal"  # overwritten by _build_edges()
         self._build_edges()
         self.vc: dict[str, tuple[int, ...]] = {}
         self._compute_vector_clocks()

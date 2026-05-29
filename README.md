@@ -20,9 +20,11 @@ incident, to find the lost updates and lifecycle violations that silent
 
 ## Install
 
+Not on PyPI yet (pre-alpha). Install from source:
+
 ```bash
-pip install tracelin            # core (pure standard library, zero deps)
-pip install "tracelin[otel]"    # + OpenTelemetry span ingestion helpers
+pip install "git+https://github.com/hinanohart/tracelin"          # core (pure stdlib, zero deps)
+pip install "tracelin[otel] @ git+https://github.com/hinanohart/tracelin"   # + OTel helpers
 ```
 
 ## Quickstart
