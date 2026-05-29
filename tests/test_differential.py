@@ -57,3 +57,63 @@ def test_oracle_and_engine_agree(data):
     engine = lin.check_object(evs, hb, spec_e, lin.Caps())
     assert engine in (lin.LINEARIZABLE, lin.NOT_LINEARIZABLE)  # no cap hit here
     assert (engine == lin.LINEARIZABLE) == oracle
+
+
+def test_differential_non_vacuous():
+    """Guard the property test against vacuity.
+
+    The property test would pass trivially if the strategy ever stopped
+    generating non-linearizable histories.  Here we pin one linearizable and one
+    non-linearizable case explicitly, and assert oracle and engine agree on both
+    — so at least one of each outcome is always exercised."""
+    lin_h = History(
+        [
+            Event(
+                agent_id="a",
+                op_type=OpType.WRITE,
+                object_key="x",
+                value=1,
+                span_id="w",
+                object_type="register",
+            ),
+            Event(
+                agent_id="a",
+                op_type=OpType.READ,
+                object_key="x",
+                value=1,
+                span_id="r",
+                parent_span_id="w",
+                object_type="register",
+            ),
+        ]
+    )
+    nl_h = History(
+        [
+            Event(
+                agent_id="a",
+                op_type=OpType.WRITE,
+                object_key="x",
+                value=1,
+                span_id="w",
+                object_type="register",
+            ),
+            Event(
+                agent_id="a",
+                op_type=OpType.READ,
+                object_key="x",
+                value=0,
+                span_id="r",
+                parent_span_id="w",
+                object_type="register",
+            ),
+        ]
+    )
+    for h, expect_lin in ((lin_h, True), (nl_h, False)):
+        hb = HappensBefore(h)
+        evs = [e for e in h.by_object["x"] if e.is_data_op]
+        spec = spec_for("register")
+        oracle = oracle_linearizable(evs, hb, spec)
+        engine = lin.check_object(evs, hb, spec_for("register"), lin.Caps())
+        assert oracle is expect_lin
+        assert (engine == lin.LINEARIZABLE) is expect_lin
+        assert (engine == lin.LINEARIZABLE) == oracle
