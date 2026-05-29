@@ -15,7 +15,7 @@ the thing you run over the traces you already collect, in CI or after an
 incident, to find the lost updates and lifecycle violations that silent
 "it mostly works" multi-agent systems hide.
 
-> **Status: v0.1.0a1 (pre-alpha).** Read the CLAIM / NON-CLAIM contract below
+> **Status: v0.1.0a2 (pre-alpha).** Read the CLAIM / NON-CLAIM contract below
 > before relying on any output. APIs may change.
 
 ## Install

@@ -41,13 +41,17 @@ class Caps:
     timeout_s: float = 5.0
 
 
-def _state_key(state: object) -> object:
-    # states for register/counter/map-subkey are scalars -> directly hashable
-    return state
-
-
 def concurrency_width(events: list[Event], hb: HappensBefore) -> int:
-    """Greedy lower-bound estimate of the largest set of pairwise-concurrent ops."""
+    """A cheap, conservative over-approximation of the per-object concurrency
+    width (the size of the largest set of pairwise-concurrent ops).
+
+    For each op it counts that op plus every op concurrent with it; because those
+    neighbours need not be pairwise concurrent, the result is an upper bound on
+    the true width, not the exact value.  That is deliberate: it is used only to
+    gate the search (``> max_concurrent_per_object`` -> UNKNOWN), so over-counting
+    can only make the gate fire *earlier* — never a wrong PASS or FAIL, just a
+    conservative UNKNOWN.
+    """
     width = 0
     for i, a in enumerate(events):
         grp = 1
@@ -55,8 +59,6 @@ def concurrency_width(events: list[Event], hb: HappensBefore) -> int:
             if i != j and hb.concurrent(a, b):
                 grp += 1
         width = max(width, grp)
-    # grp counts a node plus everything concurrent with it (not a true antichain,
-    # but a safe, cheap signal for the cap); divide nothing — used only as a gate.
     return width
 
 
@@ -102,7 +104,7 @@ def check_object(
         if steps[0] > caps.max_steps or time.monotonic() > deadline:
             timed_out[0] = True
             return False
-        key = (remaining, _state_key(state))
+        key = (remaining, state)  # scalar object states are directly hashable
         if key in memo:
             return False
         for s in ready(remaining):

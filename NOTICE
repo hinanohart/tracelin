@@ -24,9 +24,9 @@ and recent multi-agent-systems research. We credit:
   ideas to agent traces. No code is copied from them.
 
 - MAST: "Multi-Agent System Failure Taxonomy", Cemri et al., arXiv:2503.13657.
-  tracelin maps witnesses to MAST failure-mode IDs via a small MANUAL table.
-  tracelin does NOT claim exhaustive MAST coverage; unmapped findings are
-  reported as UNMAPPED.
+  tracelin maps witnesses to a MAST failure-mode category (FC1–FC3) via a small
+  MANUAL table; it does NOT claim mode-level IDs or exhaustive MAST coverage —
+  unmapped findings are reported as UNMAPPED.
 
 - "Structural race condition" terminology and the runtime-prevention
   counterpart: S-Bus, "Automatic Read-Set Reconstruction for Multi-Agent LLM
@@ -42,5 +42,7 @@ and recent multi-agent-systems research. We credit:
 - OpenTelemetry GenAI semantic conventions and the A2A task lifecycle inform
   the trace data model and the a2a_lifecycle conformance spec.
 
-Delta-debugging (1-minimal witness reduction): Zeller & Hildebrandt,
-"Simplifying and Isolating Failure-Inducing Input" (ddmin).
+Witness minimisation: a greedy 1-minimisation in the delta-debugging tradition
+of Zeller & Hildebrandt, "Simplifying and Isolating Failure-Inducing Input"
+(ddmin) — the result is 1-minimal, though the search is single-element greedy
+rather than ddmin's partition-granularity algorithm.
