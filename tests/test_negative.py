@@ -4,7 +4,9 @@
 (2) It must never flag a correctly-merged concurrent write as a violation
     (the P-C3 reducer-merge false-positive guard)."""
 
+import pytest
 from tracelin import check
+from tracelin.history import History, OpType
 from tracelin.verdict import Verdict
 
 from conftest import ev, hist
@@ -51,3 +53,16 @@ def test_timestamp_only_does_not_produce_pass():
     h = hist(a, b)
     # even with timestamps, no fabricated order -> no sound PASS
     assert check(h, "a2a_lifecycle").verdict is not Verdict.PASS
+
+
+def test_data_op_without_object_key_is_rejected():
+    # A WRITE/READ/INC with no object_key would be dropped from the by_object
+    # index and silently skipped — a possible false PASS. Reject it loudly.
+    with pytest.raises(ValueError, match="object_key"):
+        hist(ev("a", "WRITE", key=None, value=1, span="a0"))
+
+
+def test_control_plane_op_without_object_key_is_allowed():
+    # control-plane ops legitimately may not concern a specific object.
+    h = History([ev("a", "TOOL_CALL", key=None, span="a0")])
+    assert len(h) == 1 and h.events[0].op_type is OpType.TOOL_CALL

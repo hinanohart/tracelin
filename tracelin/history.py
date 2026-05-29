@@ -138,6 +138,15 @@ class History:
                     f"unknown object_type {e.object_type!r} (span {e.span_id}); "
                     f"expected one of {sorted(_VALID_OBJECT_TYPES)}"
                 )
+            if e.op_type in DATA_OPS and e.object_key is None:
+                # A data-plane op with no object_key would be dropped from the
+                # by_object index below and silently skipped by the linearizable
+                # check — a possible false PASS.  Reject it instead of lying.
+                raise ValueError(
+                    f"data-plane op {e.op_type.value} (span {e.span_id}) has no "
+                    f"object_key; a READ/WRITE/INC must name the shared object it "
+                    f"concerns"
+                )
 
     # -- program order -----------------------------------------------------
     def program_order_pred(self, event: Event) -> Event | None:
