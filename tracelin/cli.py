@@ -7,6 +7,11 @@
 specs and reports the conformance picture (the power-user view).  ``--ci`` makes
 the exit code fail-closed: non-zero on any Witness, and (since they are not a
 confirmed PASS) also on INSUFFICIENT_HB / UNKNOWN.
+
+Exit codes: 0 = OK, 1 = a Witness was found, 2 = INSUFFICIENT_HB / UNKNOWN under
+``--ci``, 3 = bad input (missing file, malformed JSON, invalid trace content).
+(argparse's own usage errors — an unknown flag or a missing argument — exit 2,
+matching argparse's default, before any trace is read.)
 """
 
 from __future__ import annotations
@@ -20,12 +25,13 @@ from . import engine
 from .adapters import langgraph as lg_adapter
 from .adapters import otel_genai as otel_adapter
 from .history import History
+from .mast import note_for
 from .verdict import Verdict
 
 EXIT_OK = 0
 EXIT_WITNESS = 1
 EXIT_UNCONFIRMED = 2  # INSUFFICIENT_HB / UNKNOWN under --ci
-EXIT_USAGE = 2  # bad input: missing file, malformed JSON, invalid trace
+EXIT_USAGE = 3  # bad input: missing file, malformed JSON, invalid trace content
 
 
 def _read_jsonl(path: str) -> list[dict]:
@@ -69,6 +75,9 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(f"{name}: {result}")
         if result.violation is not None and args.show_witness:
             print(f"    witness sub-history: {result.witness_spans}")
+            note = note_for(result.violation)
+            if note:
+                print(f"    MAST {result.violation.mast_id} (advisory): {note}")
     if args.ci:
         return _ci_exit(verdicts)
     return EXIT_OK

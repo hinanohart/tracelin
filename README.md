@@ -15,7 +15,7 @@ the thing you run over the traces you already collect, in CI or after an
 incident, to find the lost updates and lifecycle violations that silent
 "it mostly works" multi-agent systems hide.
 
-> **Status: v0.1.0a3 (pre-alpha).** Read the CLAIM / NON-CLAIM contract below
+> **Status: v0.1.0a4 (pre-alpha).** Read the CLAIM / NON-CLAIM contract below
 > before relying on any output. APIs may change.
 
 ## Install
@@ -79,9 +79,13 @@ update).
 
 The point of four values instead of a boolean is that **tracelin never emits a
 false PASS**. If it cannot trust the order, it says `INSUFFICIENT_HB`; if a
-search blows its budget, it says `UNKNOWN`. A `Witness` is sound at any trust
-tier (fewer known edges can only make a violation harder to reach, never
-fabricate one).
+search blows its budget, it says `UNKNOWN`. A *linearizability* `Witness` is sound
+at any trust tier — fewer known edges only add candidate linearisations, so a
+violation found under a weak order persists under any stronger one. The
+*concurrency* checks (race / double-assignee / act-after-terminal) work the other
+way: fewer edges can fabricate apparent concurrency, so tracelin withholds them on
+an untrusted order (reporting `INSUFFICIENT_HB`) and emits those witnesses only at
+the `causal` tier. Either way, a `Witness` that *is* emitted is sound.
 
 ## CLAIM / NON-CLAIM
 
