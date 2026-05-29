@@ -18,7 +18,10 @@ return ``UNKNOWN``:
    own merge semantics and are judged by the ``linearizable`` spec instead.)
 
 Returns a list of :class:`~tracelin.verdict.Violation`; the engine turns the
-first (or a witness-minimised one) into a ``Witness`` verdict.
+first (or a witness-minimised one) into a ``Witness`` verdict.  MAST annotation
+is *not* set here: the engine calls :func:`tracelin.mast.annotate`, the single
+source of truth, which maps each violation kind to a MAST **category** (FC1–FC3)
+or ``UNMAPPED`` — tracelin deliberately does not claim mode-level MAST IDs.
 """
 
 from __future__ import annotations
@@ -109,7 +112,6 @@ def _check_transitions(history: History, hb: HappensBefore) -> list[Violation]:
                         f"unknown task state {to!r}",
                         [e.span_id],
                         task,
-                        mast_id="UNMAPPED",
                     )
                 )
                 prev_state = to
@@ -122,7 +124,6 @@ def _check_transitions(history: History, hb: HappensBefore) -> list[Violation]:
                             f"task entered at non-entry state {to!r}",
                             [e.span_id],
                             task,
-                            mast_id="FM-1.1",
                         )
                     )
             elif to not in TRANSITIONS.get(prev_state, set()):
@@ -132,7 +133,6 @@ def _check_transitions(history: History, hb: HappensBefore) -> list[Violation]:
                         f"illegal transition {prev_state!r} -> {to!r}",
                         [e.span_id],
                         task,
-                        mast_id="FM-1.1",
                     )
                 )
             prev_state = to
@@ -157,7 +157,6 @@ def _check_no_act_after_terminal(history: History, hb: HappensBefore) -> list[Vi
                             f"{other.op_type.value} happens-after terminal {term.value!r}",
                             [term.span_id, other.span_id],
                             task,
-                            mast_id="FM-3.3",
                         )
                     )
     return out
@@ -178,7 +177,6 @@ def _check_single_assignee(history: History, hb: HappensBefore) -> list[Violatio
                             f"subtask concurrently assigned to {a.value!r} and {b.value!r}",
                             [a.span_id, b.span_id],
                             key,
-                            mast_id="FM-2.2",
                         )
                     )
     return out
@@ -202,7 +200,6 @@ def _check_concurrent_write_race(history: History, hb: HappensBefore) -> list[Vi
                             "(structural race condition / lost update)",
                             [a.span_id, b.span_id],
                             key,
-                            mast_id="FM-2.4",
                         )
                     )
     return out
