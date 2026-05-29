@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # version-update PRs disabled (open-pull-requests-limit: 0) to avoid the
+  # recurring red-CI Dependabot PRs seen across the org. Security advisories
+  # are handled manually via `pip` pins when they arise.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0

@@ -1,0 +1,68 @@
+"""CLI: verdict output and fail-closed exit codes."""
+
+import json
+
+from tracelin.cli import EXIT_OK, EXIT_UNCONFIRMED, EXIT_WITNESS, main
+
+from conftest import ev, hist
+
+
+def _write_native(tmp_path, h):
+    p = tmp_path / "trace.jsonl"
+    p.write_text("\n".join(json.dumps(r) for r in h.to_records()))
+    return str(p)
+
+
+def test_check_pass_exit_ok(tmp_path, capsys):
+    h = hist(
+        ev("o", "STATE_TRANSITION", key="t", value="submitted", span="s0"),
+        ev("o", "STATE_TRANSITION", key="t", value="working", span="s1"),
+    )
+    rc = main(["check", _write_native(tmp_path, h), "--spec", "a2a_lifecycle", "--ci"])
+    assert rc == EXIT_OK
+
+
+def test_check_witness_exit_one(tmp_path, capsys):
+    h = hist(
+        ev("s", "WRITE", key="x", value=0, span="i", object_type="register"),
+        ev("a", "WRITE", key="x", value=1, span="a0", parent="i", object_type="register"),
+        ev("b", "WRITE", key="x", value=2, span="b0", parent="i", object_type="register"),
+    )
+    rc = main(["check", _write_native(tmp_path, h), "--spec", "a2a_lifecycle", "--ci"])
+    assert rc == EXIT_WITNESS
+    assert "Witness" in capsys.readouterr().out
+
+
+def test_check_insufficient_hb_exit_two(tmp_path):
+    h = hist(
+        ev("a", "WRITE", key="x", value=1, span="a0"),
+        ev("b", "READ", key="x", value=1, span="b0"),
+    )
+    rc = main(["check", _write_native(tmp_path, h), "--spec", "linearizable", "--ci"])
+    assert rc == EXIT_UNCONFIRMED
+
+
+def test_classify_runs_all_specs(tmp_path, capsys):
+    h = hist(
+        ev("o", "STATE_TRANSITION", key="t", value="submitted", span="s0"),
+    )
+    main(["classify", _write_native(tmp_path, h)])
+    out = capsys.readouterr().out
+    assert "a2a_lifecycle=" in out and "linearizable=" in out
+
+
+def test_langgraph_adapter_via_cli(tmp_path, capsys):
+    raw = {
+        "label": "race",
+        "reducer": "none",
+        "initial": {"counter": 0},
+        "nodes": [
+            {"agent": "agent_a", "read": {"counter": 0}, "write": {"counter": 1}},
+            {"agent": "agent_b", "read": {"counter": 0}, "write": {"counter": 1}},
+        ],
+        "observed_final": None,
+    }
+    p = tmp_path / "raw.jsonl"
+    p.write_text(json.dumps(raw))
+    rc = main(["check", str(p), "--adapter", "langgraph", "--spec", "a2a_lifecycle", "--ci"])
+    assert rc == EXIT_WITNESS
