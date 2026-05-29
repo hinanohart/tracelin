@@ -15,6 +15,11 @@ Per-object compositionality (Herlihy–Wing locality): the engine calls this onc
 per ``object_key`` (and once per map sub-key); a history is linearizable iff
 every object is.  Hard caps convert intractable instances to ``UNKNOWN`` rather
 than guessing.
+
+Complexity note: the fixed-process, single-register subcase is polynomial
+(Gibbons & Korach, 1997); the general multi-object / unbounded-process case is
+NP-complete, which is precisely why the search is bounded by hard caps that yield
+``UNKNOWN`` instead of degrading into a guess.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tracelin"
-version = "0.1.0a3"
+version = "0.1.0a4"
 description = "Conformance & race linter for recorded multi-agent agent traces (linearizability + happens-before + MAST failure-mode categories under the hood)"
 readme = "README.md"
 requires-python = ">=3.10"

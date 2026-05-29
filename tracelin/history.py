@@ -37,9 +37,9 @@ class OpType(str, Enum):
     ASSIGN = "ASSIGN"  # a subtask is assigned to an agent
     DELEGATE = "DELEGATE"  # an agent hands a subtask to another
     TOOL_CALL = "TOOL_CALL"
-    TOOL_RESULT = "TOOL_RESULT"
+    TOOL_RESULT = "TOOL_RESULT"  # reserved: carried by the data model, no v0.1 rule
     STATE_TRANSITION = "STATE_TRANSITION"  # A2A task FSM transition
-    CONSENT = "CONSENT"
+    CONSENT = "CONSENT"  # reserved: carried by the data model, no v0.1 rule
     TERMINAL = "TERMINAL"  # task reached a terminal state
 
 
@@ -54,8 +54,9 @@ class Event:
     Attributes:
         agent_id: the actor that performed the operation.
         op_type: see :class:`OpType`.
-        object_key: the shared object / task id the op concerns (``None`` for
-            ops that are not about a specific object).
+        object_key: the shared object / task id the op concerns.  Required for
+            data-plane ops (READ/WRITE/INC); may be ``None`` only for
+            control-plane ops that are not about a specific object.
         value: written value, read return value, target state name, etc.
         span_id: unique id of this event; auto-filled by :class:`History` if
             omitted.

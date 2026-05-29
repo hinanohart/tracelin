@@ -3,7 +3,13 @@
 ``check(history, spec)`` is the single public entry point.  It owns the rules
 that keep verdicts honest:
 
-* A *witness* (violation) is sound at any trust tier, so it is always reported.
+* A *linearizability* witness is sound at any trust tier (fewer known edges only
+  add candidate linearisations, so a violation under a weak order persists under
+  any stronger one) and is always reported.  The *concurrency* rules of
+  ``a2a_lifecycle`` (race / double-assignee / act-after-terminal) are the
+  opposite — dropping an edge can fabricate apparent concurrency — so they are
+  withheld on an untrusted order (reported ``INSUFFICIENT_HB``) and only emit a
+  witness at the ``causal`` tier.  Either way, a witness that *is* emitted is sound.
 * A "no violation found" result is reported ``PASS`` only when the happens-before
   order is trustworthy (``causal`` tier).  Otherwise it becomes
   ``INSUFFICIENT_HB`` — we refuse to claim PASS on an order we do not trust,

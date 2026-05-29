@@ -17,6 +17,12 @@ return ``UNKNOWN``:
    race condition S-Bus (arXiv:2605.17076) calls an SRC.  (Counters carry their
    own merge semantics and are judged by the ``linearizable`` spec instead.)
 
+Race coverage: this layer flags *write-write* hazards (two VC-incomparable writes
+to one register).  The complementary *write-read* hazard — a read that observes a
+stale value under concurrency — is not a structural fault on its own, so it is
+surfaced as ``not_linearizable`` by the ``linearizable`` spec; the two layers
+jointly realise the write-write / write-read race definition.
+
 Returns a list of :class:`~tracelin.verdict.Violation`; the engine turns the
 first (or a witness-minimised one) into a ``Witness`` verdict.  MAST annotation
 is *not* set here: the engine calls :func:`tracelin.mast.annotate`, the single

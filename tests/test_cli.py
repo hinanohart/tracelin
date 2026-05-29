@@ -91,3 +91,21 @@ def test_unknown_op_type_is_a_clean_error(tmp_path, capsys):
     assert rc == EXIT_USAGE
     err = capsys.readouterr().err
     assert "error" in err and "Traceback" not in err
+
+
+def test_usage_exit_code_is_distinct_from_unconfirmed():
+    # a bad-input error must be distinguishable from an unconfirmed verdict
+    assert EXIT_USAGE != EXIT_UNCONFIRMED
+
+
+def test_show_witness_surfaces_mast_advisory(tmp_path, capsys):
+    # a structural write-write race carries an advisory MAST FC2 note
+    h = hist(
+        ev("s", "WRITE", key="x", value=0, span="i", object_type="register"),
+        ev("a", "WRITE", key="x", value=1, span="a0", parent="i", object_type="register"),
+        ev("b", "WRITE", key="x", value=2, span="b0", parent="i", object_type="register"),
+    )
+    main(["check", _write_native(tmp_path, h), "--spec", "a2a_lifecycle", "--show-witness"])
+    out = capsys.readouterr().out
+    assert "witness sub-history:" in out
+    assert "MAST FC2 (advisory):" in out
