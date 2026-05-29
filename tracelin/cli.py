@@ -25,6 +25,7 @@ from .verdict import Verdict
 EXIT_OK = 0
 EXIT_WITNESS = 1
 EXIT_UNCONFIRMED = 2  # INSUFFICIENT_HB / UNKNOWN under --ci
+EXIT_USAGE = 2  # bad input: missing file, malformed JSON, invalid trace
 
 
 def _read_jsonl(path: str) -> list[dict]:
@@ -115,7 +116,19 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except FileNotFoundError as e:
+        print(f"tracelin: error: trace file not found: {e.filename}", file=sys.stderr)
+        return EXIT_USAGE
+    except json.JSONDecodeError as e:
+        print(f"tracelin: error: malformed JSON in {args.trace}: {e}", file=sys.stderr)
+        return EXIT_USAGE
+    except (ValueError, OSError) as e:
+        # invalid trace content (unknown op_type, data-op without object_key,
+        # duplicate span id, ...): report cleanly instead of a traceback.
+        print(f"tracelin: error: {e}", file=sys.stderr)
+        return EXIT_USAGE
 
 
 if __name__ == "__main__":  # pragma: no cover

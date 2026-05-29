@@ -5,7 +5,13 @@ from tracelin.history import Event, History, OpType
 
 
 def test_span_ids_autoassigned_per_agent():
-    h = History([Event("a", OpType.READ), Event("a", OpType.WRITE), Event("b", OpType.READ)])
+    h = History(
+        [
+            Event("a", OpType.READ, object_key="x"),
+            Event("a", OpType.WRITE, object_key="x"),
+            Event("b", OpType.READ, object_key="x"),
+        ]
+    )
     assert [e.span_id for e in h.events] == ["a#0", "a#1", "b#0"]
 
 
@@ -33,9 +39,9 @@ def test_indexes_by_agent_and_object():
 
 
 def test_program_order_pred():
-    e0 = Event("a", OpType.READ)
-    e1 = Event("a", OpType.WRITE)
-    h = History([e0, e1, Event("b", OpType.READ)])
+    e0 = Event("a", OpType.READ, object_key="x")
+    e1 = Event("a", OpType.WRITE, object_key="x")
+    h = History([e0, e1, Event("b", OpType.READ, object_key="x")])
     assert h.program_order_pred(e1) is e0
     assert h.program_order_pred(e0) is None
 
@@ -58,6 +64,11 @@ def test_op_type_string_coercion():
 
 
 def test_subhistory_preserves_span_ids():
-    h = History([Event("a", OpType.READ, span_id="s0"), Event("b", OpType.WRITE, span_id="s1")])
+    h = History(
+        [
+            Event("a", OpType.READ, object_key="x", span_id="s0"),
+            Event("b", OpType.WRITE, object_key="x", span_id="s1"),
+        ]
+    )
     sub = h.subhistory({"s0"})
     assert [e.span_id for e in sub.events] == ["s0"]

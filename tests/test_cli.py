@@ -2,7 +2,7 @@
 
 import json
 
-from tracelin.cli import EXIT_OK, EXIT_UNCONFIRMED, EXIT_WITNESS, main
+from tracelin.cli import EXIT_OK, EXIT_UNCONFIRMED, EXIT_USAGE, EXIT_WITNESS, main
 
 from conftest import ev, hist
 
@@ -66,3 +66,28 @@ def test_langgraph_adapter_via_cli(tmp_path, capsys):
     p.write_text(json.dumps(raw))
     rc = main(["check", str(p), "--adapter", "langgraph", "--spec", "a2a_lifecycle", "--ci"])
     assert rc == EXIT_WITNESS
+
+
+def test_missing_file_is_a_clean_error(tmp_path, capsys):
+    rc = main(["check", str(tmp_path / "nope.jsonl")])
+    assert rc == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert "not found" in err and "Traceback" not in err
+
+
+def test_malformed_json_is_a_clean_error(tmp_path, capsys):
+    p = tmp_path / "bad.jsonl"
+    p.write_text("{not json}")
+    rc = main(["check", str(p)])
+    assert rc == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert "error" in err and "Traceback" not in err
+
+
+def test_unknown_op_type_is_a_clean_error(tmp_path, capsys):
+    p = tmp_path / "weird.jsonl"
+    p.write_text(json.dumps({"agent_id": "a", "op_type": "FROBNICATE", "object_key": "x"}))
+    rc = main(["check", str(p)])
+    assert rc == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert "error" in err and "Traceback" not in err
