@@ -140,4 +140,4 @@ are in [`NOTICE`](NOTICE). No code is copied from those projects.
 
 ## License
 
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+MIT. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
